@@ -15,6 +15,11 @@ $(document).ready(function () {
 		showAlert('<?=$this->lang->line("Connection problem")?>', 'alert');
 	});
 
+	var protocol2 = new TomTomProtocol(<?=json_encode($this->config->item('tomtom-key'))?>, function (message) {
+		clearSecondaryAlerts();
+		showAlert('<?=$this->lang->line("Connection problem")?>', 'alert');
+	});
+
 	var map = new mapboxgl.Map({
 		container: 'map', // container id
 		style: 'mapbox://styles/mapbox/outdoors-v11', // stylesheet location
@@ -150,7 +155,13 @@ $(document).ready(function () {
 	 			'<?=$locale?>',
 	 			function (results) {
 	 				if (results.status === 'ok') {
-	 					showRoutingResults(results);
+						showRoutingResults(results);
+						protocol2.findRoute(
+							coordinates['start'],
+							coordinates['finish'],
+							function (time) {
+								showTomTomResults(time);
+							});
 	 				} else {
 	 					clearSecondaryAlerts();
 	 					showAlert('<?=$this->lang->line("Connection problem")?>', 'alert');
@@ -181,6 +192,10 @@ $(document).ready(function () {
 	function clearRoutingResultsOnTable() {
 		$('.nav').remove();
 		$('.tab-content').remove();
+	}
+
+	function clearTomTomResults() {
+		$('.tomtomContainer').remove();
 	}
 
 	function clearAlerts() {
@@ -222,6 +237,7 @@ $(document).ready(function () {
 
 		clearAlerts();
 		clearRoutingResultsOnTable();
+		clearTomTomResults();
 		showAlert('<img src="images/loading.gif" alt="... "/> ' + '<?=$this->lang->line("Please wait")?>...', 'secondary');
 
 		var completedLatLon = 0;
@@ -377,6 +393,13 @@ $(document).ready(function () {
 			});
 		});
 		showSingleRoutingResultOnMap(results.routingresults[0]);
+	}
+
+	function showTomTomResults(time){
+		var tomtomContainer = $("<div class='tomtomContainer'><br>Estimasi Waktu menggunakan TomTom's API: </div>");
+		$('#routingresults').append(tomtomContainer);
+		var timeText = $('<p>'+time/60+' menit</p>');
+		tomtomContainer.append(timeText);
 	}
 
 	/**

@@ -50,14 +50,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 function TomTomProtocol(apikey, errorHandler) {
 	this.findRoute = function(start, finish, successHandler) {
 		var HANDLE_URL2 = 'https://api.tomtom.com/routing/1/calculateRoute/';
-		HANDLE_URL2 += start + ':' + finish + '/json?key=' + apikey;
+		HANDLE_URL2 += start + ':' + finish + '/json?key=' + apikey + '&computeTravelTimeFor=all';
 		$.ajax({
 			url: HANDLE_URL2,
 			success: function(data) {
 				console.log(data);
-				let travelTime = data['routes'][0]['summary']['travelTimeInSeconds'];
-				console.log(travelTime);
-				successHandler(travelTime);
+				successHandler(data);
 			},
 			error: function(jqxhr, textStatus, error) {
 				errorHandler();

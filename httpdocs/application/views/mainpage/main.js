@@ -159,8 +159,8 @@ $(document).ready(function () {
 						protocol2.findRoute(
 							coordinates['start'],
 							coordinates['finish'],
-							function (time) {
-								showTomTomResults(time);
+							function (data) {
+								showTomTomResults(data);
 							});
 	 				} else {
 	 					clearSecondaryAlerts();
@@ -170,24 +170,24 @@ $(document).ready(function () {
 	 	}
 	 }
 
-	 function clearRoutingResultsOnMap() {
-	 	updateRegion(region, false);
-	 	// Remove layers in backward manner, because layer is dependant on source
-	 	// but source was created first
-	 	for (let i = map_component_ids.length; i >= 0; i--) {
-	 		if(map.getLayer(map_component_ids[i])) {
-	 			map.removeLayer(map_component_ids[i]);
-	 		}
-	 		if(map.getSource(map_component_ids[i])) {
-	 			map.removeSource(map_component_ids[i]);
-	 		}
-	 	}
-	 	// Remove markers
-	 	for (let i = 0; i < routingResultMarkers.length; i++) {
-	 		routingResultMarkers[i].remove();
-	 	}
+	function clearRoutingResultsOnMap() {
+		updateRegion(region, false);
+		// Remove layers in backward manner, because layer is dependant on source
+		// but source was created first
+		for (let i = map_component_ids.length; i >= 0; i--) {
+			if(map.getLayer(map_component_ids[i])) {
+				map.removeLayer(map_component_ids[i]);
+			}
+			if(map.getSource(map_component_ids[i])) {
+				map.removeSource(map_component_ids[i]);
+			}
+		}
+		// Remove markers
+		for (let i = 0; i < routingResultMarkers.length; i++) {
+			routingResultMarkers[i].remove();
+		}
 		routingResultMarkers = [];
-	 }
+	}
 
 	function clearRoutingResultsOnTable() {
 		$('.nav').remove();
@@ -357,8 +357,8 @@ $(document).ready(function () {
 		var kiriURL = encodeURIComponent('<?= base_url() ?>?start=' + encodeURIComponent($('#startInput').val()) + '&finish=' + encodeURIComponent($('#finishInput').val()) + '&region=' + region);
 		var kiriMessage = encodeURIComponent('<?=$this->lang->line("I take public transport")?>'.replace('%finish%', $('#finishInput').val()).replace('%start%', $('#startInput').val()));
 		var sectionContainer = $('<div></div>');
-		var temp1 = $('<ul class="nav nav-tabs" role="tablist"></ul>');
-		var temp2 = $('<div class="tab-content"></div>');
+		var temp1 = $('<ul id="result-tab" class="nav nav-tabs" role="tablist"></ul>');
+		var temp2 = $('<div id="result-tab-content" class="tab-content"></div>');
 		$('#routingresults').append(sectionContainer);
 		$.each(results.routingresults, function(resultIndex, result) {
 			var resultHTML1 = resultIndex === 0 ? '<li><a class="nav-link active active-tabs ' : '<li><a class="nav-link ';
@@ -395,11 +395,30 @@ $(document).ready(function () {
 		showSingleRoutingResultOnMap(results.routingresults[0]);
 	}
 
-	function showTomTomResults(time){
-		var tomtomContainer = $("<div class='tomtomContainer'><br>Estimasi Waktu menggunakan TomTom's API: </div>");
-		$('#routingresults').append(tomtomContainer);
-		var timeText = $('<p>'+time/60+' menit</p>');
-		tomtomContainer.append(timeText);
+	function showTomTomResults(data){
+		let time = data['routes'][0]['summary']['travelTimeInSeconds'];
+		var timeText = secondsToHms(time);
+		var drivingPanel = '<li><a class="nav-link text-decoration-none" data-toggle="tab" href="#panel1-driving" role="tab">Driving</a></li>';
+		var drivingContent = '<div id="panel1-driving" class="x tab-pane" role="tabpanel"><table class="table-striped">';
+		drivingContent += '<tr><td class="p-1"><img src="../images/means/car/car.png" alt="car"/></td><td class="p-1" style="width: 100%;">'+timeText+'</td></tr></table></div>';
+		$('#result-tab').append(drivingPanel);
+		$('#result-tab-content').append(drivingContent);
+
+		let arrCoordinates = data['routes'][0]['legs'][0]['points'];
+
+		$('a[href="#panel1-driving"]').click(function() {
+			showDrivingRoute(arrCoordinates);
+		});
+	}
+	
+	function secondsToHms(d) {
+		d = Number(d);
+		var h = Math.floor(d / 3600);
+		var m = Math.floor(d % 3600 / 60);
+	
+		var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+		var mDisplay = m > 0 ? m + (m == 1 ? " minute" : " minutes") : "";
+		return hDisplay + mDisplay; 
 	}
 
 	/**
@@ -500,6 +519,91 @@ $(document).ready(function () {
 		});
 	}
 
+
+	function showDrivingRoute(arrCoordinates) {
+		clearRoutingResultsOnMap();
+		let trackCounter = 0;
+		let bounds = null;
+		let coordinates = structuredClone(arrCoordinates);
+		$.each(coordinates, function (index, value) {
+			let newVal = [value['longitude'],value['latitude']];
+			coordinates[index] = newVal;
+		});
+
+		map.addSource('source_driving', {
+			'type': 'geojson',
+			'data': {
+				'type': 'Feature',
+				'properties': {},
+				'geometry': {
+					'type': 'LineString',
+					'coordinates': coordinates
+				}
+			}
+		});
+		map_component_ids.push('source_driving');
+
+		map.addLayer({
+			'id': 'layer_driving',
+			'type': 'line',
+			'source': 'source_driving',
+			'layout': {
+				'line-join': 'round',
+				'line-cap': 'round'
+			},
+			'paint': {
+				'line-color': trackColors[0],
+				'line-width': 5
+			}
+		});
+		map_component_ids.push('layer_driving');
+
+		for (let i = 0; i < coordinates.length; i++) {
+			if (bounds) {
+				bounds.extend(coordinates[i]);
+			} else {
+				bounds = new mapboxgl.LngLatBounds(coordinates[i], coordinates[i]);
+			}					
+		}
+
+		// let marker = new mapboxgl.Marker({
+		// 	element: startMarkerElement,
+		// 	anchor: 'bottom-right'
+		// });
+		// marker.setLngLat(stringToLonLat(step[2][0]));
+		// marker.addTo(map);
+		// routingResultMarkers.push(marker);
+
+		// else {
+		// 	var lonlat = stringToLonLat(step[2][0]);
+		// 	let angkotMarkerElement = document.createElement('img');
+		// 	angkotMarkerElement.setAttribute('src', '../../../images/means/' + step[0] + '/baloon/' + step[1] + '.png');
+		// 	angkotMarkerElement.setAttribute('alt', 'angkot marker');
+		// 	let marker = new mapboxgl.Marker({
+		// 		element: angkotMarkerElement,
+		// 		anchor: 'bottom-left'
+		// 	});
+		// 	marker.setLngLat(lonlat);
+		// 	marker.addTo(map);
+		// 	routingResultMarkers.push(marker);
+		// }
+
+		// if (stepIndex === result.steps.length - 1) {
+		// 	let marker = new mapboxgl.Marker({
+		// 		element: finishMarkerElement,
+		// 		anchor: 'bottom-left'
+		// 	});
+		// 	marker.setLngLat(stringToLonLat(step[2][step[2].length - 1]));
+		// 	marker.addTo(map);
+		// 	routingResultMarkers.push(marker);
+		// }
+		// };
+
+		map.fitBounds(bounds, {
+			padding: 20
+		});
+	}
+	
 	/**
 	 * Converts "lat,lon" array into coordinate object array.
 	 * @return the converted Point array object

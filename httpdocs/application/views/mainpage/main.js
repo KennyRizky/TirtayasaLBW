@@ -565,39 +565,38 @@ $(document).ready(function () {
 				bounds = new mapboxgl.LngLatBounds(coordinates[i], coordinates[i]);
 			}					
 		}
+		if (stepIndex === 0) {
+			let marker = new mapboxgl.Marker({
+				element: startMarkerElement,
+				anchor: 'bottom-right'
+			});
+			marker.setLngLat(stringToLonLat(step[2][0]));
+			marker.addTo(map);
+			routingResultMarkers.push(marker);
+		}
+		else {
+			var lonlat = stringToLonLat(step[2][0]);
+			let angkotMarkerElement = document.createElement('img');
+			angkotMarkerElement.setAttribute('src', '../../../images/means/' + step[0] + '/baloon/' + step[1] + '.png');
+			angkotMarkerElement.setAttribute('alt', 'angkot marker');
+			let marker = new mapboxgl.Marker({
+				element: angkotMarkerElement,
+				anchor: 'bottom-left'
+			});
+			marker.setLngLat(lonlat);
+			marker.addTo(map);
+			routingResultMarkers.push(marker);
+		}
 
-		// let marker = new mapboxgl.Marker({
-		// 	element: startMarkerElement,
-		// 	anchor: 'bottom-right'
-		// });
-		// marker.setLngLat(stringToLonLat(step[2][0]));
-		// marker.addTo(map);
-		// routingResultMarkers.push(marker);
-
-		// else {
-		// 	var lonlat = stringToLonLat(step[2][0]);
-		// 	let angkotMarkerElement = document.createElement('img');
-		// 	angkotMarkerElement.setAttribute('src', '../../../images/means/' + step[0] + '/baloon/' + step[1] + '.png');
-		// 	angkotMarkerElement.setAttribute('alt', 'angkot marker');
-		// 	let marker = new mapboxgl.Marker({
-		// 		element: angkotMarkerElement,
-		// 		anchor: 'bottom-left'
-		// 	});
-		// 	marker.setLngLat(lonlat);
-		// 	marker.addTo(map);
-		// 	routingResultMarkers.push(marker);
-		// }
-
-		// if (stepIndex === result.steps.length - 1) {
-		// 	let marker = new mapboxgl.Marker({
-		// 		element: finishMarkerElement,
-		// 		anchor: 'bottom-left'
-		// 	});
-		// 	marker.setLngLat(stringToLonLat(step[2][step[2].length - 1]));
-		// 	marker.addTo(map);
-		// 	routingResultMarkers.push(marker);
-		// }
-		// };
+		if (stepIndex === result.steps.length - 1) {
+			let marker = new mapboxgl.Marker({
+				element: finishMarkerElement,
+				anchor: 'bottom-left'
+			});
+			marker.setLngLat(stringToLonLat(step[2][step[2].length - 1]));
+			marker.addTo(map);
+			routingResultMarkers.push(marker);
+		};
 
 		map.fitBounds(bounds, {
 			padding: 20

@@ -5,6 +5,7 @@ $config['google-server-key'] = 'FILLME';
 $config['scheduled-secret'] = 'FILLME';
 $config['cicaheumledeng-key'] = 'FILLME';
 $config['mapbox-token'] = 'FILLME';
+$config['tomtom-key'] = 'FILLME';
 
 // E-mail
 $config['email-config'] = Array(

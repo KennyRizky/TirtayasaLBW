@@ -397,10 +397,17 @@ $(document).ready(function () {
 
 	function showTomTomResults(data){
 		let time = data['routes'][0]['summary']['travelTimeInSeconds'];
+		let distance = data['routes'][0]['summary']['lengthInMeters'];
+		if(distance >= 1000){
+			distance = Math.round((distance/1000) * 10) / 10 + ' kilometer';
+		}
+		else{
+			distance = distance+' meter';
+		}
 		var timeText = secondsToHms(time);
-		var drivingPanel = '<li><a class="nav-link text-decoration-none" data-toggle="tab" href="#panel1-driving" role="tab">Driving</a></li>';
+		var drivingPanel = '<li><a class="nav-link text-decoration-none" data-toggle="tab" href="#panel1-driving" role="tab">'+timeText+'</a></li>';
 		var drivingContent = '<div id="panel1-driving" class="x tab-pane" role="tabpanel"><table class="table-striped">';
-		drivingContent += '<tr><td class="p-1"><img src="../images/means/car/car.png" alt="car"/></td><td class="p-1" style="width: 100%;">'+timeText+'</td></tr></table></div>';
+		drivingContent += '<tr><td class="p-1"><img src="../images/means/car/car.png" alt="car"/></td><td class="p-1" style="width: 100%;">Drive about '+ distance +' from your starting point to your destination.</td></tr></table></div>';
 		$('#result-tab').append(drivingPanel);
 		$('#result-tab-content').append(drivingContent);
 
@@ -416,9 +423,8 @@ $(document).ready(function () {
 		var h = Math.floor(d / 3600);
 		var m = Math.floor(d % 3600 / 60);
 	
-		var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
-		var mDisplay = m > 0 ? m + (m == 1 ? " minute" : " minutes") : "";
-		return hDisplay + mDisplay; 
+		var timeDisplay = h > 0 ? h + (h == 1 ? " hour" : " hours") : m > 0 ? m + (m == 1 ? " minute" : " minutes") : "";
+		return timeDisplay; 
 	}
 
 	/**

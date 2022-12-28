@@ -52,6 +52,9 @@ $(document).ready(function () {
 	var startMarkerElement = document.createElement('img');
 	startMarkerElement.setAttribute('src', '../../../images/start.png');
 	startMarkerElement.setAttribute('alt', 'start marker');
+	var drivingMarkerElement = document.createElement('img');
+	drivingMarkerElement.setAttribute('src', '../../../images/car.png');
+	drivingMarkerElement.setAttribute('alt', 'car marker');
 	var finishMarkerElement = document.createElement('img');
 	finishMarkerElement.setAttribute('src', '../../../images/finish.png');
 	finishMarkerElement.setAttribute('alt', 'finish marker');
@@ -571,14 +574,15 @@ $(document).ready(function () {
 				bounds = new mapboxgl.LngLatBounds(coordinates[i], coordinates[i]);
 			}					
 		}
+		
+		let marker = new mapboxgl.Marker({
+			element: drivingMarkerElement,
+		 	anchor: 'bottom-right'
+		});
 
-		// let marker = new mapboxgl.Marker({
-		// 	element: startMarkerElement,
-		// 	anchor: 'bottom-right'
-		// });
-		// marker.setLngLat(stringToLonLat(step[2][0]));
-		// marker.addTo(map);
-		// routingResultMarkers.push(marker);
+		marker.setLngLat(coordinates[0]);
+		marker.addTo(map);
+		routingResultMarkers.push(marker);
 
 		// else {
 		// 	var lonlat = stringToLonLat(step[2][0]);

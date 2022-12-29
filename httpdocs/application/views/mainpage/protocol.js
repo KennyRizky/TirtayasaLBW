@@ -54,7 +54,6 @@ function TomTomProtocol(apikey, errorHandler) {
 		$.ajax({
 			url: HANDLE_URL2,
 			success: function(data) {
-				console.log(data);
 				successHandler(data);
 			},
 			error: function(jqxhr, textStatus, error) {

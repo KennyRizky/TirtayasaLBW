@@ -5,6 +5,7 @@ var regions = <?=json_encode($this->config->item('regions'))?>;
 mapboxgl.accessToken = <?=json_encode($this->config->item('mapbox-token'))?>;
 
 const trackColors = ['#339933', '#8BB33B', '#267373'];
+const driveColors = ['#339933', '#FFC000', '#CC3333'];
 const walkColor = '#CC3333';
 
 var map_component_ids = [];
@@ -53,8 +54,11 @@ $(document).ready(function () {
 	startMarkerElement.setAttribute('src', '../../../images/start.png');
 	startMarkerElement.setAttribute('alt', 'start marker');
 	var drivingMarkerElement = document.createElement('img');
-	drivingMarkerElement.setAttribute('src', '../../../images/car.png');
+	drivingMarkerElement.setAttribute('src', '../../../images/means/car/baloon/car.png');
 	drivingMarkerElement.setAttribute('alt', 'car marker');
+	var drivingFinishMarkerElement = document.createElement('img');
+	drivingFinishMarkerElement.setAttribute('src', '../../../images/means/car/baloon/car-finish.png');
+	drivingFinishMarkerElement.setAttribute('alt', 'car finish marker');
 	var finishMarkerElement = document.createElement('img');
 	finishMarkerElement.setAttribute('src', '../../../images/finish.png');
 	finishMarkerElement.setAttribute('alt', 'finish marker');
@@ -414,10 +418,12 @@ $(document).ready(function () {
 		$('#result-tab').append(drivingPanel);
 		$('#result-tab-content').append(drivingContent);
 
+		console.log(data);
+		let timeMultiple = data['routes'][0]['summary']['travelTimeInSeconds']/data['routes'][0]['summary']['noTrafficTravelTimeInSeconds'];
 		let arrCoordinates = data['routes'][0]['legs'][0]['points'];
 
 		$('a[href="#panel1-driving"]').click(function() {
-			showDrivingRoute(arrCoordinates);
+			showDrivingRoute(arrCoordinates, timeMultiple);
 		});
 	}
 	
@@ -529,7 +535,7 @@ $(document).ready(function () {
 	}
 
 
-	function showDrivingRoute(arrCoordinates) {
+	function showDrivingRoute(arrCoordinates, timeMultiple) {
 		clearRoutingResultsOnMap();
 		let trackCounter = 0;
 		let bounds = null;
@@ -552,6 +558,13 @@ $(document).ready(function () {
 		});
 		map_component_ids.push('source_driving');
 
+		let driveColor = driveColors[0];
+		if(timeMultiple >= 1.5 && timeMultiple < 2.0){
+			driveColor = driveColors[1];
+		}
+		else if(timeMultiple >= 2.0){
+			driveColor = driveColors[2];
+		}
 		map.addLayer({
 			'id': 'layer_driving',
 			'type': 'line',
@@ -561,7 +574,7 @@ $(document).ready(function () {
 				'line-cap': 'round'
 			},
 			'paint': {
-				'line-color': trackColors[0],
+				'line-color': driveColor,
 				'line-width': 5
 			}
 		});
@@ -575,39 +588,25 @@ $(document).ready(function () {
 			}					
 		}
 		
+		//create start marker
 		let marker = new mapboxgl.Marker({
 			element: drivingMarkerElement,
-		 	anchor: 'bottom-right'
+		 	anchor: 'bottom-left'
 		});
 
 		marker.setLngLat(coordinates[0]);
 		marker.addTo(map);
 		routingResultMarkers.push(marker);
 
-		// else {
-		// 	var lonlat = stringToLonLat(step[2][0]);
-		// 	let angkotMarkerElement = document.createElement('img');
-		// 	angkotMarkerElement.setAttribute('src', '../../../images/means/' + step[0] + '/baloon/' + step[1] + '.png');
-		// 	angkotMarkerElement.setAttribute('alt', 'angkot marker');
-		// 	let marker = new mapboxgl.Marker({
-		// 		element: angkotMarkerElement,
-		// 		anchor: 'bottom-left'
-		// 	});
-		// 	marker.setLngLat(lonlat);
-		// 	marker.addTo(map);
-		// 	routingResultMarkers.push(marker);
-		// }
+		//create finish marker
+		let marker2 = new mapboxgl.Marker({
+			element: drivingFinishMarkerElement,
+		 	anchor: 'bottom-left'
+		});
 
-		// if (stepIndex === result.steps.length - 1) {
-		// 	let marker = new mapboxgl.Marker({
-		// 		element: finishMarkerElement,
-		// 		anchor: 'bottom-left'
-		// 	});
-		// 	marker.setLngLat(stringToLonLat(step[2][step[2].length - 1]));
-		// 	marker.addTo(map);
-		// 	routingResultMarkers.push(marker);
-		// }
-		// };
+		marker2.setLngLat(coordinates.at(-1));
+		marker2.addTo(map);
+		routingResultMarkers.push(marker2);
 
 		map.fitBounds(bounds, {
 			padding: 20

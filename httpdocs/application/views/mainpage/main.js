@@ -163,17 +163,17 @@ $(document).ready(function () {
 	 			function (results) {
 	 				if (results.status === 'ok') {
 						showRoutingResults(results);
+						protocol2.findRoute(
+							coordinates['start'],
+							coordinates['finish'],
+							function (data) {
+								showTomTomResults(data);
+							});
 	 				} else {
 	 					clearSecondaryAlerts();
 	 					showAlert('<?=$this->lang->line("Connection problem")?>', 'alert');
 	 				}
 	 			});
-			protocol2.findRoute(
-				coordinates['start'],
-				coordinates['finish'],
-				function (data) {
-					showTomTomResults(data);
-				});
 	 	}
 	 }
 
